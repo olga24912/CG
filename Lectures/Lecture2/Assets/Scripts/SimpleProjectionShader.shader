@@ -58,16 +58,16 @@
  
                 fixed4 colX = tex2D(_XTex, xUV), colY = tex2D(_YTex, yUV), colZ = tex2D(_ZTex, zUV);
 
-                //float3 blendWeight = abs(i.normal);
-                //blendWeight = blendWeight / (blendWeight.x + blendWeight.y + blendWeight.z);
+                float3 blendWeight = normalize(pow(abs(i.normal), 4));
+                blendWeight = blendWeight / (blendWeight.x + blendWeight.y + blendWeight.z);
                 
-                float3 blendWeight = 0;
-                float2 xzBlend = abs(normalize(i.normal.xz));
-                blendWeight.xz = max(0, xzBlend - 0.67);
-                blendWeight.xz /= dot(blendWeight.xz, float2(1, 1));
+                //float3 blendWeight = 0;
+                //float2 xzBlend = abs(normalize(i.normal.xz));
+                //blendWeight.xz = max(0, xzBlend - 0.67);
+                //blendWeight.xz /= dot(blendWeight.xz, float2(1, 1));
 
-                blendWeight.y = saturate((abs(i.normal.y) - 0.675) * 80.0);
-                blendWeight.xz *= (1 - blendWeight.y); 
+                //blendWeight.y = saturate((abs(i.normal.y) - 0.675) * 80.0);
+                //blendWeight.xz *= (1 - blendWeight.y); 
                                
                 fixed4 col = colX * blendWeight.x + colY * blendWeight.y + colZ * blendWeight.z;
                 col.rgb *= light;
