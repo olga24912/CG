@@ -25,7 +25,7 @@ public class Node {
             ans += (float)1.0/res;
         }
         //Debug.Log(ans - 100);
-        return ans - (float)50;
+        return ans - (float)70;
     }
 
     public Node(Vector3 pos_, int id_, float EdgeLen) {
@@ -35,9 +35,9 @@ public class Node {
             active = 1;
         }
         id = id_;
-        norm = (new Vector3(f(new Vector3(pos[0] + EdgeLen, pos[1], pos[2])) - f(new Vector3(pos[0] - EdgeLen, pos[1], pos[2])), 
-                            f(new Vector3(pos[0], pos[1] + EdgeLen, pos[2])) - f(new Vector3(pos[0], pos[1] - EdgeLen, pos[2])), 
-                            f(new Vector3(pos[0], pos[1], pos[2] + EdgeLen)) - f(new Vector3(pos[0], pos[1], pos[2] - EdgeLen))));
+        norm = (new Vector3(f(new Vector3(pos[0] - EdgeLen, pos[1], pos[2])) - f(new Vector3(pos[0] + EdgeLen, pos[1], pos[2])), 
+                            f(new Vector3(pos[0], pos[1] - EdgeLen, pos[2])) - f(new Vector3(pos[0], pos[1] + EdgeLen, pos[2])), 
+                            f(new Vector3(pos[0], pos[1], pos[2] - EdgeLen)) - f(new Vector3(pos[0], pos[1], pos[2] + EdgeLen))));
         norm.Normalize();
         //if (pos[0] == 0.5 && pos[1] == 0.5) {
         //    Debug.Log("Position " + pos.ToString() + " norm: " + norm.ToString());
