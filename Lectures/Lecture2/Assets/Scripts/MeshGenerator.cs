@@ -12,7 +12,7 @@ public class Node {
 
     public float f(Vector3 point) {
         //Debug.Log(point);
-        Vector3[] centers = new[] {new Vector3((float)0.5, (float)0.7, (float)0.7), 
+        Vector3[] centers = new[] {new Vector3((float)0.5, (float)0.7, (float)0.5), 
                                    new Vector3((float)0.7, (float)0.5, (float)0.7), 
                                    new Vector3((float)0.7, (float)0.7, (float)0.5)};
         float ans = 0;
@@ -25,7 +25,7 @@ public class Node {
             ans += (float)1.0/res;
         }
         //Debug.Log(ans - 100);
-        return ans - (float)100;
+        return ans - (float)50;
     }
 
     public Node(Vector3 pos_, int id_, float EdgeLen) {
@@ -197,7 +197,7 @@ public class MeshGenerator : MonoBehaviour
             //    Mathf.Sin(Time.time + vertexPos.x)
             //);
             
-            vertices.Add(vertexPos);
+            vertices.Add(2*(vertexPos - new Vector3((float)0.5, (float)0.5, (float)0.5)));
             norms.Add(vnorm);
         }
 
