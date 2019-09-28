@@ -36,9 +36,13 @@ public class Node {
         }
         id = id_;
         norm = (new Vector3(f(new Vector3(pos[0] + EdgeLen, pos[1], pos[2])) - f(new Vector3(pos[0] - EdgeLen, pos[1], pos[2])), 
-                                     f(new Vector3(pos[0], pos[1] + EdgeLen, pos[2])) - f(new Vector3(pos[0], pos[1] - EdgeLen, pos[2])), 
-                                     f(new Vector3(pos[0], pos[1], pos[2] + EdgeLen)) - f(new Vector3(pos[0], pos[1], pos[2] - EdgeLen))));
+                            f(new Vector3(pos[0], pos[1] + EdgeLen, pos[2])) - f(new Vector3(pos[0], pos[1] - EdgeLen, pos[2])), 
+                            f(new Vector3(pos[0], pos[1], pos[2] + EdgeLen)) - f(new Vector3(pos[0], pos[1], pos[2] - EdgeLen))));
         norm.Normalize();
+        //if (pos[0] == 0.5 && pos[1] == 0.5) {
+        //    Debug.Log("Position " + pos.ToString() + " norm: " + norm.ToString());
+        //Debug.Log(norm);
+        //}
     }                  
 }
 
@@ -69,9 +73,9 @@ public class Cube {
 
     public Vector3 getNorms(Node node1, Node node2) {
         float coeff = Math.Abs(node1.fvalue)/(Math.Abs(node1.fvalue) + Math.Abs(node2.fvalue));
-        Vector3 norm = new Vector3(node1.norm[0] + ((float)1.0 - coeff) * (node2.norm[0] - node1.norm[0]), 
-                                     node1.norm[1] + ((float)1.0 - coeff) * (node2.norm[1] - node1.norm[1]),
-                                     node1.norm[2] + ((float)1.0 - coeff) * (node2.norm[2] - node1.norm[2]));
+        Vector3 norm = new Vector3(coeff*node1.norm[0] + ((float)1.0 - coeff)*node2.norm[0], 
+                                  coeff*node1.norm[1] + ((float)1.0 - coeff)*node2.norm[1],
+                                  coeff*node1.norm[2] + ((float)1.0 - coeff)*node2.norm[2]);
         norm.Normalize();
         return norm;
     }
@@ -101,7 +105,8 @@ public class CubeGrid {
     public float edgeLen;
 
     public List<int> sourceTriangles = new List<int>(); 
-    public List<Vector3> sourceVertices = new List<Vector3>(); 
+    public List<Vector3> sourceVertices = new List<Vector3>();
+    public List<Vector3> sourceNorms = new List<Vector3>(); 
    
     public CubeGrid(float lenSize) {
         edgeLen = lenSize;
@@ -135,9 +140,11 @@ public class CubeGrid {
                     cubes[i, j, g].calcTriangle();
                     List<int> list_tmp_triangle = cubes[i, j, g].triangles;
                     List<Vector3> list_tmp_points = cubes[i, j, g].verts;
+                    List<Vector3> list_tmp_norms = cubes[i, j, g].norms;
                     int cur_num = sourceVertices.Count;
                     for (int h = 0; h < list_tmp_points.Count; ++h) {
                         sourceVertices.Add(list_tmp_points[h]);
+                        sourceNorms.Add(list_tmp_norms[h]);
                     }
                     for (int h = 0; h < list_tmp_triangle.Count; ++h) {
                         sourceTriangles.Add(list_tmp_triangle[h] + cur_num);
@@ -187,7 +194,7 @@ public class MeshGenerator : MonoBehaviour
         {
             triangles.Add(vertices.Count);
             Vector3 vertexPos = cubegrid.sourceVertices[cubegrid.sourceTriangles[i]];
-            Vector3 vnorm = cubegrid.sourceVertices[cubegrid.sourceTriangles[i]];
+            Vector3 vnorm = cubegrid.sourceNorms[cubegrid.sourceTriangles[i]];
            
             //Uncomment for some animation:
             //vertexPos += new Vector3
