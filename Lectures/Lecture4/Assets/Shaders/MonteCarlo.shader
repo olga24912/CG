@@ -24,7 +24,7 @@
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
            
-            const float pi = 3.141592653589793238462;
+            static const float pi = 3.141592653589793238462;
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -45,11 +45,18 @@
             float _DiffusePower;
             float _SpecularPower;
 
-            float rand(float n) {
-                return frac(sin(n)*43758.5453);
+            float rand(uint n) {
+                n ^= 2747636419u;
+                n *= 2654435769u;
+                n ^= n>>16;
+                n *= 2654435769u;
+                n ^= n>>16;
+                n *= 2654435769u;
+                return float(n)/4294967295.0;
             }
 
             float f(float3 w, v2f i) {
+                //return 1;
                 float3 normal = normalize(i.normal);
                 float3 viewDirection = normalize(_WorldSpaceCameraPos - i.pos.xyz);
                 float3 lightDirection = normalize(w);
@@ -75,23 +82,23 @@
                 return o;
             }
 
-            float3 getColor(float3 w) {
+            float3 getColor(float3 w, fixed3 normal) {
                // float3 w_prime = reflect(w, normal);
                 return texCUBE(_Cubemap, w).rgb;
             }
 
             float3 getRandomDir(fixed3 normal, int i, v2f ii) {
-                 float z = rand(float(i));
-                 float phi = rand(float(i+7))*360;
+                 float z = rand(float(2*i));
+                 float phi = rand(float(2*i+1))*2*pi;
                  
-                 float3 bs1 = normalize(cross(normal, float3(1.0, 1.0, 1.0)));
+                 float3 bs1 = normalize(cross(normal, float3(rand(i*3), rand(i*3 + 1), rand(i*3 + 2))));
                  float3 bs2 = normalize(cross(bs1, normal));
                  //Debug.Log("z" + str(z) + " phi:" + str(phi));
                  return z*normal + sqrt(1.0f - z*z) * (cos(phi) * bs1 + sin(phi) * bs2);
             }
 
             float normalf(v2f i) {
-                int n = 5000;
+                int n = 50000;
                 float3 normal = normalize(i.normal);
                 float FVal = 0;
                 for (int j = 0; j < n; ++j) {
@@ -102,7 +109,7 @@
             }
 
             fixed4 frag (v2f i) : SV_Target {
-                int n = 5000;
+                int n = 10000;
                 float3 normal = normalize(i.normal);
                 //float3 w = getRandomDir(normal, 0, i);
                 //return float4(getColor(w)*f(w, i), 1.0);
@@ -112,7 +119,7 @@
                     float3 w = normalize(getRandomDir(normal, j/* + i.pos.x + i.pos.y*/, i));
                     float curf = f(w, i);
                     Fnormal += curf; 
-                    color += curf * getColor(w);
+                    color += curf * getColor(w, normal);
                 }
                 return float4(color/Fnormal, 1.0);    
             }
