@@ -56,22 +56,25 @@
             }
 
             float f(float3 w, v2f i) {
-                //return 1;
                 float3 normal = normalize(i.normal);
-                float3 viewDirection = normalize(_WorldSpaceCameraPos - i.pos.xyz);
-                float3 lightDirection = normalize(w);
-                                                      
-                float cosTheta = max(0, dot(normal, lightDirection));
-                float diffuse = cosTheta;
+               
+                //if (_DiffusePower > 0) {
+                    float3 lightDir = normalize(w);
+                    float NdotL = dot( normal, lightDir );
+                    float intensity = saturate( NdotL );
+
+                    float diffuse = intensity * _DiffusePower;
+                    float3 viewDirection = normalize(_WorldSpaceCameraPos - i.pos.xyz);
                 
-                float specular = 0;
-                if (dot(normal, lightDirection) > 0.0) {
-                    float cosAlpha = max(0.0, dot(reflect(-lightDirection, normal), viewDirection));
-                    specular =  pow(cosAlpha, _Shininess);
-                }                                          
-                 
-                return (diffuse*_DiffusePower + specular);
-            }
+                    float3 H = normalize(lightDir + viewDirection);
+
+                    float NdotH = dot( normal, H );
+                    intensity = pow(saturate(NdotH), _Shininess);
+                    float specular = intensity * _SpecularPower;
+                    return diffuse + specular;  
+                //}
+                //return 1;
+           }
 
             v2f vert (appdata v)
             {
