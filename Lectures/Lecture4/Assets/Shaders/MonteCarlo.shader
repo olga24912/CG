@@ -82,7 +82,7 @@
 
             float3 getRandomDir(fixed3 normal, int i, v2f ii) {
                  float z = rand(float(i));
-                 float phi = rand(float(i))*2*3.1415;
+                 float phi = rand(float(i+7))*2*3.1415;
                  float3 bs1 = normalize(cross(normal, float3(1.0, 1.0, 1.0)));
                  float3 bs2 = normalize(cross(bs1, normal));
                  //Debug.Log("z" + str(z) + " phi:" + str(phi));
@@ -90,7 +90,7 @@
             }
 
             float normalf(v2f i) {
-                int n = 100;
+                int n = 1000;
                 float3 normal = normalize(i.normal);
                 float FVal = 0;
                 for (int j = 0; j < n; ++j) {
@@ -101,14 +101,14 @@
             }
 
             fixed4 frag (v2f i) : SV_Target {
-                int n = 100;
+                int n = 1000;
                 float3 normal = normalize(i.normal);
                 //float3 w = getRandomDir(normal, 0, i);
                 //return float4(getColor(w)*f(w, i), 1.0);
                 float3 color = float3(0.0, 0.0, 0.0);
                 float Fnormal = normalf(i);
                 for (int j = 0; j < n; ++j) {
-                    float3 w = normalize(getRandomDir(normal, j, i));
+                    float3 w = normalize(getRandomDir(normal, j + i.pos.x, i));
                     float curf = f(w, i)/Fnormal; 
                     color += (1.0f/n)*curf * getColor(w);
                 }
