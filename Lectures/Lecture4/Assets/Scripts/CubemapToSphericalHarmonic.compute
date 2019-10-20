@@ -41,20 +41,38 @@ float Random(uint seed)
 
 float3 SampleColor(float3 direction)
 {   
+    //return float3(1, 0, 0);
     float4 tex = _Env.SampleLevel(samplerLinearRepeat, direction, 0);
     return tex.rgb;
 }
 
 float3 SampleDirection(int sample, uint id) {
+    //return float3(0, 1, 0);
     float z = 1 - 2*Random(float(2*id + 3*sample));
     float phi = Random(float(2*id + 3*sample +1))*2*PI;
                  
     return float3(sqrt(1.0f - z*z) * cos(phi), sqrt(1.0f - z*z) * sin(phi), z);
 }
 
+float f(int id, float3 direction) {  
+   float coeff1 = sqrt(3)/(2*sqrt(PI));
+   float coeff2 = sqrt(15)/(2*sqrt(PI));
+   float res[9] = {-coeff1 * direction.y, 
+                   coeff1 * direction.z, 
+                   -coeff1 * direction.x,  
+                   1/(2*sqrt(PI)), 
+                   coeff2*direction.y*direction.x, 
+                   -coeff2*direction.y*direction.z, 
+                   -coeff2*direction.x*direction.z, 
+                   sqrt(5)*(3*direction.z*direction.z - 1)/(4*sqrt(PI)), 
+                   sqrt(15)*(direction.x*direction.x - direction.y*direction.y)/(4*sqrt(PI))};
+
+   return res[id];   
+}
+
 float4 SampleRes0(float3 direction) {
    float coeff = sqrt(3)/(2*sqrt(PI)); 
-   return float4(-coeff * direction.x, coeff * direction.y, -coeff * direction.z, 1/(2*sqrt(PI)));
+   return float4(-coeff * direction.y, coeff * direction.z, -coeff * direction.x,  1/(2*sqrt(PI)));
 }
 
 float4 SampleRes1(float3 direction) {
@@ -93,22 +111,23 @@ void ComputeHarmonics(uint id : SV_DispatchThreadID)
         float4 res0 = SampleRes0(direction);
         float4 res1 = SampleRes1(direction);
         float res2 = SampleRes2(direction);
-        //results[0] += res0 * color.r;
-        //results[1] += res0 * color.g;
-        //results[2] += res0 * color.b;
-        //results[3] += res1 * color.r;
+        results[0] += res0 * color.r;
+        results[1] += res0 * color.g;
+        results[2] += res0 * color.b;
+        results[3] += res1 * color.r;
         results[4] += res1 * color.g;
-        //results[5] += res1 * color.b;
-        //results[6] += float4(res2 * color.r, res2 * color.g, res2 * color.b, 0);
+        results[5] += res1 * color.b;
+        results[6] += float4(res2 * color.r, res2 * color.g, res2 * color.b, 0);
     }
 
     for (int i = 0; i < 7; ++i) {
         results[i] /= SAMPLES;
+        results[i] *= 4*PI;
     }
     // TASK: project light from _Env to spherical harmonic coefficients;
     // Multiply that by the same polynom coeffients, because they appear in the projection of max(0, cos(theta)) 
     // and store them in results[]
-    
+    /*
     for (int c = 0; c < 3; c++)
     {
         // Precomputing coefficients of max(0, cos(theta) for L=0
@@ -121,8 +140,8 @@ void ComputeHarmonics(uint id : SV_DispatchThreadID)
     {
         // Precomputing coefficients of max(0, cos(theta) for L=2
         results[3 + c] *= PI / 4;
-    } 
-    
+    }      
+    */
     SH_0_1_r[id] = results[0];
     SH_0_1_g[id] = results[1];
     SH_0_1_b[id] = results[2];

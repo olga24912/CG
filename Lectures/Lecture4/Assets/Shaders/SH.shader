@@ -60,9 +60,38 @@
                 return f * f;
             }
             
+            float sqrt(float x) {
+               return pow(x, 0.5);
+            }
+
+            float3 f(float4 direction) { 
+                 float PI = 3.14159; 
+                 float coeff1 = sqrt(3)/(2*sqrt(PI));
+                 float coeff2 = sqrt(15)/(2*sqrt(PI));
+                 float res[9] = {-coeff1 * direction.y, 
+                   coeff1 * direction.z, 
+                   -coeff1 * direction.x,  
+                   1/(2*sqrt(PI)), 
+                   coeff2*direction.y*direction.x, 
+                   -coeff2*direction.y*direction.z, 
+                   -coeff2*direction.x*direction.z, 
+                   sqrt(5)*(3*direction.z*direction.z - 1)/(4*sqrt(PI)), 
+                   sqrt(15)*(direction.x*direction.x - direction.y*direction.y)/(4*sqrt(PI))};
+                  float3 res_color;
+                  res_color.r = SH_0_1_r[0]*res[0] + SH_0_1_r[1]*res[1] + SH_0_1_r[2]*res[2] + SH_0_1_r[3]*res[3] +
+                                SH_2_r[0]*res[4] + SH_2_r[1]*res[5] + SH_2_r[2]*res[6] + SH_2_r[3]*res[7] + SH_2_rgb[0]*res[8];  
+                  res_color.g = SH_0_1_g[0]*res[0] + SH_0_1_g[1]*res[1] + SH_0_1_g[2]*res[2] + SH_0_1_g[3]*res[3] +
+                                SH_2_g[0]*res[4] + SH_2_g[1]*res[5] + SH_2_g[2]*res[6] + SH_2_g[3]*res[7] + SH_2_rgb[1]*res[8];
+                  res_color.b = SH_0_1_b[0]*res[0] + SH_0_1_b[1]*res[1] + SH_0_1_b[2]*res[2] + SH_0_1_b[3]*res[3] +
+                                SH_2_b[0]*res[4] + SH_2_b[1]*res[5] + SH_2_b[2]*res[6] + SH_2_b[3]*res[7] + SH_2_rgb[2]*res[8];
+                  return res_color;   
+            }
+
+            
             // normal.w is expected to be 1
             half3 SH_3_Order(half4 normal)
             {
+                //return f(normal);
                 half3 res;
                 res.r = dot(SH_0_1_r, normal);
                 res.g = dot(SH_0_1_g, normal);
