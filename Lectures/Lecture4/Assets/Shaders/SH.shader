@@ -92,17 +92,18 @@
             half3 SH_3_Order(half4 normal)
             {
                 //return f(normal);
-                half3 res;
+                //normal=half4(1, 1, 1, 1);
+                half3 res;                      
                 res.r = dot(SH_0_1_r, normal);
                 res.g = dot(SH_0_1_g, normal);
                 res.b = dot(SH_0_1_b, normal);
                 
-                half4 vB = normal.xyzz * normal.yzxz;
+                half4 vB =  normal.xyzz * normal.yzxz; //half4(1, 1, 1, 1);//
                 res.r += dot(SH_2_r, vB);
                 res.g += dot(SH_2_g, vB);
                 res.b += dot(SH_2_b, vB);
                 
-                half vC = pow2(normal.x) - pow2(normal.y);
+                half vC =  pow2(normal.x) - pow2(normal.y); //half4(1, 1, 1, 1);//
                 res += SH_2_rgb.rgb * vC;
                 
                 return res;

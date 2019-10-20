@@ -72,7 +72,7 @@ float f(int id, float3 direction) {
 
 float4 SampleRes0(float3 direction) {
    float coeff = sqrt(3)/(2*sqrt(PI)); 
-   return float4(-coeff * direction.y, coeff * direction.z, -coeff * direction.x,  1/(2*sqrt(PI)));
+   return float4(-coeff * direction.x, coeff * direction.y, -coeff * direction.z,  1/(2*sqrt(PI)));
 }
 
 float4 SampleRes1(float3 direction) {
@@ -89,7 +89,7 @@ float SampleRes2(float3 direction) {
 void ComputeHarmonics(uint id : SV_DispatchThreadID)
 {
     const int THREADS = 1024;
-    const int SAMPLES = 10;
+    const int SAMPLES = 24;
     
     // See SH.shader for more details
     float4 results[7] = {
@@ -118,16 +118,17 @@ void ComputeHarmonics(uint id : SV_DispatchThreadID)
         results[4] += res1 * color.g;
         results[5] += res1 * color.b;
         results[6] += float4(res2 * color.r, res2 * color.g, res2 * color.b, 0);
-    }
+    } 
 
     for (int i = 0; i < 7; ++i) {
         results[i] /= SAMPLES;
-        results[i] *= 4*PI;
+       // results[i] *= 4*PI;
     }
+    
     // TASK: project light from _Env to spherical harmonic coefficients;
     // Multiply that by the same polynom coeffients, because they appear in the projection of max(0, cos(theta)) 
     // and store them in results[]
-    /*
+    
     for (int c = 0; c < 3; c++)
     {
         // Precomputing coefficients of max(0, cos(theta) for L=0
@@ -141,7 +142,7 @@ void ComputeHarmonics(uint id : SV_DispatchThreadID)
         // Precomputing coefficients of max(0, cos(theta) for L=2
         results[3 + c] *= PI / 4;
     }      
-    */
+    
     SH_0_1_r[id] = results[0];
     SH_0_1_g[id] = results[1];
     SH_0_1_b[id] = results[2];
