@@ -72,17 +72,19 @@ float f(int id, float3 direction) {
 
 float4 SampleRes0(float3 direction) {
    float coeff = sqrt(3)/(2*sqrt(PI)); 
-   return float4(-coeff * direction.x, coeff * direction.y, -coeff * direction.z,  1/(2*sqrt(PI)));
+   coeff *= coeff;
+   return float4(coeff * direction.x, coeff * direction.y, coeff * direction.z,   1/(4*PI));
 }
 
 float4 SampleRes1(float3 direction) {
    float coeff = sqrt(15)/(2*sqrt(PI)); 
-   return float4(coeff*direction.y*direction.x, -coeff*direction.y*direction.z, -coeff*direction.x*direction.z, 
-                 sqrt(5)*(3*direction.z*direction.z - 1)/(4*sqrt(PI)));
+   coeff *= coeff;
+   return float4(coeff*direction.y*direction.x, coeff*direction.y*direction.z, coeff*direction.x*direction.z, 
+                 5*(3*direction.z*direction.z - 1)/(16*PI));
 }
 
 float SampleRes2(float3 direction) {
-    return sqrt(15)*(direction.x*direction.x - direction.y*direction.y)/(4*sqrt(PI));
+    return 15*(direction.x*direction.x - direction.y*direction.y)/(16*PI);
 }
 
 [numthreads(1024, 1, 1)]
@@ -122,7 +124,7 @@ void ComputeHarmonics(uint id : SV_DispatchThreadID)
 
     for (int i = 0; i < 7; ++i) {
         results[i] /= SAMPLES;
-       // results[i] *= 4*PI;
+        results[i] *= PI;
     }
     
     // TASK: project light from _Env to spherical harmonic coefficients;
