@@ -68,20 +68,20 @@ Shader "0_Custom/POM"
             float2 ParallaxMapping(float2 texCoord, float3 viewDir) 
             {
                  float layerDepth = 0.1;
-                 float currentLayerDepth = 0.0;
-                 float currentH = tex2D(_HeightMap, texCoord).r;
-                 float2 p = viewDir.xy/viewDir.z * _HeightMapScale * (1. - currentH);
-                 return texCoord - p; 
-                 float2 deltaP = p / 10.;
+                 float currentLayerDepth = 1.0;
+                 //float currentH = tex2D(_HeightMap, texCoord).r;
+                 float2 p = viewDir.xy/viewDir.z * _HeightMapScale;// * (1. - currentH);
+                 //return texCoord - p; 
+                 float2 deltaP = p * layerDepth;
 
                  float2 currentTC = texCoord;
-                 //float currentH = tex2D(_HeightMap, currentTC).r;
- 
-                 while (currentLayerDepth < currentH) {
-                     currentTC += deltaP;
-                     currentH = tex2D(_HeightMap, currentTC).r;
-                     currentLayerDepth += layerDepth;
-                     if (currentLayerDepth >= 1)/*currentH)*/ {
+                 float currentH = tex2D(_HeightMap, currentTC).r;
+                
+                 while (currentLayerDepth > currentH) {
+                     currentTC -= deltaP;
+                     currentH = tex2D(_HeightMap, texCoord).r;
+                     currentLayerDepth -= layerDepth;
+                     if (currentLayerDepth < -1) {
                          return float2(0, 0);
                      }
                  }
