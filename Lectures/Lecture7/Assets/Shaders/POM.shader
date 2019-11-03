@@ -76,17 +76,24 @@ Shader "0_Custom/POM"
 
                  float2 currentTC = texCoord;
                  float currentH = tex2D(_HeightMap, currentTC).r;
-                
+                 if (currentLayerDepth <= currentH) {
+                     return texCoord;
+                 }
                  while (currentLayerDepth > currentH) {
                      currentTC -= deltaP;
-                     currentH = tex2D(_HeightMap, texCoord).r;
+                     currentH = tex2D(_HeightMap, currentTC).r;
                      currentLayerDepth -= layerDepth;
                      if (currentLayerDepth < -1) {
                          return float2(0, 0);
                      }
-                 }
+                 }                   
 
-                 return currentTC;
+                 float2 prevTC = currentTC + deltaP;
+                 float afterDepth = currentLayerDepth + layerDepth - tex2D(_HeightMap, prevTC).r;
+                 float beforeDepth = currentH - currentLayerDepth;
+
+                 float weight = afterDepth / (afterDepth + beforeDepth);
+                 return prevTC * (1.0 - weight) + currentTC * weight;
             };
 
             fixed4 frag (v2f i) : SV_Target
