@@ -8,7 +8,6 @@ Shader "0_Custom/POM"
         _BumpMap ("Normal Map", 2D) = "bump" {}
         _HeightMap ("Height Map", 2D) = "white" {}
         _HeightMapScale ("Height", Float) = 1
-        _StepNum ("Step Number", Float) = 10
     }
     SubShader
     {
@@ -64,23 +63,27 @@ Shader "0_Custom/POM"
             sampler2D _MainTex;
             sampler2D _BumpMap;
             sampler2D _HeightMap;
-            half _HeightMapScale;
-            half _StepNum;
-
+            float _HeightMapScale;
+            
             float2 ParallaxMapping(float2 texCoord, float3 viewDir) 
             {
-                 float layerDepth = 1.0/_StepNum;
+                 float layerDepth = 0.1;
                  float currentLayerDepth = 0.0;
-                 float2 p = viewDir.xy/viewDir.z * _HeightMapScale; 
-                 float2 deltaP = p / _StepNum;
+                 float currentH = tex2D(_HeightMap, texCoord).r;
+                 float2 p = viewDir.xy/viewDir.z * _HeightMapScale * (1. - currentH);
+                 return texCoord - p; 
+                 float2 deltaP = p / 10.;
 
                  float2 currentTC = texCoord;
-                 float currentH = tex2D(_HeightMap, currentTC).r;
+                 //float currentH = tex2D(_HeightMap, currentTC).r;
  
                  while (currentLayerDepth < currentH) {
                      currentTC += deltaP;
                      currentH = tex2D(_HeightMap, currentTC).r;
                      currentLayerDepth += layerDepth;
+                     if (currentLayerDepth >= 1)/*currentH)*/ {
+                         return float2(0, 0);
+                     }
                  }
 
                  return currentTC;
@@ -89,11 +92,13 @@ Shader "0_Custom/POM"
             fixed4 frag (v2f i) : SV_Target
             {
                 float3 viewDirection = normalize(i.worldPos - _WorldSpaceCameraPos);
+                //return float4(viewDirection, 1);
                 float3 viewDir;
                 viewDir.x = dot(float3(i.tspace0.x, i.tspace1.x, i.tspace2.x), viewDirection);
                 viewDir.y = dot(float3(i.tspace0.y, i.tspace1.y, i.tspace2.y), viewDirection);
                 viewDir.z = dot(float3(i.tspace0.z, i.tspace1.z, i.tspace2.z), viewDirection);
-                viewDir = normalize(viewDir);
+                viewDir /= viewDir.z;
+                //return float4(viewDir.x, viewDir.y, 0, 1);
                 i.uv = ParallaxMapping(i.uv, viewDir); 
 
 
