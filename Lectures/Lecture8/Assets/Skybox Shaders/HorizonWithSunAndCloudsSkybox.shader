@@ -100,7 +100,12 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         }
         return cloudSample * _Coverage * weather;
     }
-                                
+    
+    float BeerPowder(float depth) {
+        const float coeff = 0.01;
+        return exp(-coeff * depth) * (1 - exp(-coeff * 2 * depth));
+    }
+                            
     half4 frag(v2f i) : COLOR
     {
         float3 v = normalize(i.texcoord);
@@ -127,10 +132,11 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         float3 pos = _WorldSpaceCameraPos + rayDir*dist0;
         float3 cloudLight = 0;
         float alpha = 0;
+        float depth = 0;
         for (int s = 0; s < samples; ++s) {
              float noise = getHighDetailNoise(pos, step);
              //return half4(noise, noise, noise, 0);
-             float density = noise * scatter; 
+             float density = noise * step; 
            
              if (density > 0.0000001) {
                  alpha += (1.0 - alpha) * noise; 
@@ -139,11 +145,12 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
              if (alpha >= 0.99) {
                  break;
              }
-
+             cloudLight += half3(1, 1, 1) * density * scatter * BeerPowder(depth);
              pos += rayDir * step;
+             depth += density;
         }
       
-        half3 res = half3(1, 1, 1) * alpha + (1 - alpha) * skyLight;
+        half3 res = cloudLight * alpha + (1 - alpha) * skyLight;
         return  half4(res, 0);
     }
                                                             
