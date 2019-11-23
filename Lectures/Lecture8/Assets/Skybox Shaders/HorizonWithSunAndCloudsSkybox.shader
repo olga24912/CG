@@ -18,8 +18,11 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         _SunAzimuth("Sun Azimuth (editor only)", float) = 20
         _SunAltitude("Sun Altitude (editor only)", float) = 38
 
-        _SampleCount("Sample Count", int) = 64 //64 - 128 depends on angle
+        _NoiseTex("NoiseVolume", 3D) = "white" {}
+        _Weather("Weather", 2D) = "white" {}
+        _SampleCount("Sample Count", int) = 128 //64 - 128 depends on angle
         _FarDist("Far Dist", float) = 30000
+        _Coverage("Coverage", float) = 0.5
     }
 
     CGINCLUDE
@@ -50,10 +53,15 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
     half _SunAlpha;
     half _SunBeta;
     half3 _SunVector;
+    
 
+
+    sampler3D _NoiseTex;
+    sampler2D _Weather;
     int _SampleCount;
     float _FarDist;
-    
+    float _Coverage;
+
     v2f vert(appdata v)
     {
         v2f o;
@@ -73,8 +81,24 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         return 1; 
     }
 
-    float getHighDetailNoise(float3 pos) {
-        return 1; 
+    float sampleConeToLight(float3 pos) {
+        const int sampleCount = 6;
+        float3 lightPos = _WorldSpaceLightPos0.xyz;
+        return 1;
+    }
+
+
+    float getHighDetailNoise(float3 pos, float step) {
+        const float scale = 3*1e-5;
+        const float wscale = 1e-6;
+
+        float4 uvw = float4(pos * scale, 0);
+        float cloudSample = tex3Dlod(_NoiseTex, uvw).b; 
+        float weather = tex2Dlod(_Weather, float4(pos.x * wscale, pos.z * wscale, 0, 0)).r;
+        if (cloudSample * weather * _Coverage < 0.05) {
+            return 0; 
+        }
+        return cloudSample * _Coverage * weather;
     }
                                 
     half4 frag(v2f i) : COLOR
@@ -94,29 +118,32 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         float dist0 = float(1500)/rayDir.y;
         float dist1 = float(4000)/rayDir.y;
         
-        if (rayDir.y < 0.0001 || dist0 >= _FarDist) {
+        if (rayDir.y < 0.00001) {
             return half4(skyLight, 0);
         }
         
         float step = (dist1 - dist0)/samples;
-        float scatter = 0.008; 
+        float scatter = 0.01; 
         float3 pos = _WorldSpaceCameraPos + rayDir*dist0;
         float3 cloudLight = 0;
         float alpha = 0;
         for (int s = 0; s < samples; ++s) {
-             float noise = getHighDetailNoise(pos);         
-             if (noise > 0.0000001) {
-                 float density = noise * step;
-                 alpha += (1.0 - alpha) * density; 
+             float noise = getHighDetailNoise(pos, step);
+             //return half4(noise, noise, noise, 0);
+             float density = noise * scatter; 
+           
+             if (density > 0.0000001) {
+                 alpha += (1.0 - alpha) * noise; 
              }
 
              if (alpha >= 0.99) {
                  break;
              }
+
              pos += rayDir * step;
         }
-
-        half3 res = lerp(half3(1, 1, 1), skyLight, 1 - alpha);
+      
+        half3 res = half3(1, 1, 1) * alpha + (1 - alpha) * skyLight;
         return  half4(res, 0);
     }
                                                             
@@ -136,6 +163,5 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
             #pragma fragment frag
             ENDCG
         }
-    } 
-    CustomEditor "HorizonWithSunSkyboxInspector"
+    }                                                    
 }
