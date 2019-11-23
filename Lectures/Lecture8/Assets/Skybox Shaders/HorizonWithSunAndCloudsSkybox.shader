@@ -19,6 +19,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         _SunAltitude("Sun Altitude (editor only)", float) = 38
 
         _NoiseTex("NoiseVolume", 3D) = "white" {}
+        _NoiseTex2("NoiseVolume2", 3D) = "white" {}
         _Weather("Weather", 2D) = "white" {}
         _SampleCount("Sample Count", int) = 128 //64 - 128 depends on angle
         _FarDist("Far Dist", float) = 30000
@@ -57,6 +58,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
 
 
     sampler3D _NoiseTex;
+    sampler3D _NoiseTex2;
     sampler2D _Weather;
     int _SampleCount;
     float _FarDist;
@@ -73,14 +75,18 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
     float getHighDetailNoise(float3 pos) {
         const float scale = 3*1e-5;
         const float wscale = 1e-6;
+        const float dscale = 1e-4; 
 
         float4 uvw = float4(pos * scale, 0);
         float cloudSample = tex3Dlod(_NoiseTex, uvw).b; 
         float weather = tex2Dlod(_Weather, float4(pos.x * wscale, pos.z * wscale, 0, 0)).r;
-        if (cloudSample * weather * _Coverage < 0.05) {
+        weather = saturate(weather - (1. - _Coverage));
+        if (cloudSample * weather < 0.05) {
             return 0; 
         }
-        return cloudSample * _Coverage * weather;
+
+        float detailNoise = 0.5*tex3Dlod(_NoiseTex2, float4(pos*dscale, 0)).b;
+        return saturate(cloudSample - detailNoise) * weather;
     }
 
     float BeerPowder(float depth) {
@@ -117,7 +123,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         float p2 = 1 - p1 - p3;                                            
         half3 c_sky = _SkyColor1 * p1 + _SkyColor2 * p2 + _SkyColor3 * p3;
         half3 c_sun = _SunColor * min(pow(max(0, dot(v, _SunVector)), _SunAlpha) * _SunBeta, 1);
-        half3 skyLight = c_sky * _SkyIntensity + c_sun * _SunIntensity;
+        half3 skyLight = c_sky * _SkyIntensity;// + c_sun * _SunIntensity;
 
 
         int samples = _SampleCount;
@@ -125,12 +131,12 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         float dist0 = float(1500)/rayDir.y;
         float dist1 = float(4000)/rayDir.y;
         
-        if (rayDir.y < 0.00001) {
+        if (rayDir.y < 0.03) {
             return half4(skyLight, 0);
         }
         
         float step = (dist1 - dist0)/samples;
-        float scatter = 0.01; 
+        float scatter = 0.05; 
         float3 pos = _WorldSpaceCameraPos + rayDir*dist0;
         float3 cloudLight = 0;
         float alpha = 0;
