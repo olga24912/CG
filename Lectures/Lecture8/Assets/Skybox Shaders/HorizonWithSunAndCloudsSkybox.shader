@@ -70,25 +70,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         return o;
     }
 
-    float get_height_gradient(float y) {
-         if (y <= 0.5 && y >= 0.25) {
-             return 1;
-         }
-         return 0;
-    }
-
-    float get_density_reduce_coeff(float y) {
-        return 1; 
-    }
-
-    float sampleConeToLight(float3 pos) {
-        const int sampleCount = 6;
-        float3 lightPos = _WorldSpaceLightPos0.xyz;
-        return 1;
-    }
-
-
-    float getHighDetailNoise(float3 pos, float step) {
+    float getHighDetailNoise(float3 pos) {
         const float scale = 3*1e-5;
         const float wscale = 1e-6;
 
@@ -100,12 +82,32 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         }
         return cloudSample * _Coverage * weather;
     }
-    
+
     float BeerPowder(float depth) {
-        const float coeff = 0.01;
+        const float coeff = 0.005;
         return exp(-coeff * depth) * (1 - exp(-coeff * 2 * depth));
     }
-                            
+   
+
+    float sampleConeToLight(float3 pos) {
+        const int sampleCount = 6;
+        float3 lightPos = normalize(_WorldSpaceLightPos0.xyz);
+        float step = (float(4000) - pos.y) / (lightPos.y * sampleCount);
+        float depth = 0;
+        float3 curpos = pos + lightPos * step;
+        for (int s = 0; s < sampleCount; ++s) {
+            depth += getHighDetailNoise(curpos) * step;
+            pos += lightPos * step;
+        }
+
+        return BeerPowder(depth);
+    }
+    
+    float HenyeyGreenstein(float cosine) {
+        const float hgcoeff = 0.5;
+        return 0.5 * (1 - hgcoeff * hgcoeff)/pow(1 + hgcoeff * hgcoeff - 2 * hgcoeff * cosine, 1.5);
+    }
+                        
     half4 frag(v2f i) : COLOR
     {
         float3 v = normalize(i.texcoord);
@@ -133,8 +135,9 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         float3 cloudLight = 0;
         float alpha = 0;
         float depth = 0;
+        float hg = HenyeyGreenstein(dot(rayDir, _WorldSpaceLightPos0.xyz));
         for (int s = 0; s < samples; ++s) {
-             float noise = getHighDetailNoise(pos, step);
+             float noise = getHighDetailNoise(pos);
              //return half4(noise, noise, noise, 0);
              float density = noise * step; 
            
@@ -145,7 +148,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
              if (alpha >= 0.99) {
                  break;
              }
-             cloudLight += half3(1, 1, 1) * density * scatter * BeerPowder(depth);
+             cloudLight += half3(1, 1, 1) * density * scatter * BeerPowder(depth) * hg * sampleConeToLight(pos);
              pos += rayDir * step;
              depth += density;
         }
