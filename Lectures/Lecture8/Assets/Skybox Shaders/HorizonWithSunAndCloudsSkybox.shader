@@ -90,20 +90,20 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
     }
 
     float BeerPowder(float depth) {
-        const float coeff = 0.005;
-        return exp(-coeff * depth) * (1 - exp(-coeff * 2 * depth));
+        const float coeff = 0.02;
+        return exp(-coeff * depth);// * (1 - exp(-coeff * 2 * depth));
     }
-   
+                                                             
 
     float sampleConeToLight(float3 pos) {
         const int sampleCount = 6;
-        float3 lightPos = normalize(_WorldSpaceLightPos0.xyz);
-        float step = (float(4000) - pos.y) / (lightPos.y * sampleCount);
+        float3 lightPos = normalize(_WorldSpaceLightPos0.xyz - pos);
+        float step = (float(4000) - pos.y) / sampleCount;
         float depth = 0;
         float3 curpos = pos + lightPos * step;
         for (int s = 0; s < sampleCount; ++s) {
             depth += getHighDetailNoise(curpos) * step;
-            pos += lightPos * step;
+            curpos += lightPos * step;
         }
 
         return BeerPowder(depth);
@@ -149,12 +149,12 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
            
              if (density > 0.0000001) {
                  alpha += (1.0 - alpha) * noise; 
+                 cloudLight += half3(1, 1, 1) * sampleConeToLight(pos)  * hg * density * scatter * BeerPowder(depth);  
              }
 
              if (alpha >= 0.99) {
                  break;
              }
-             cloudLight += half3(1, 1, 1) * density * scatter * BeerPowder(depth) * hg * sampleConeToLight(pos);
              pos += rayDir * step;
              depth += density;
         }

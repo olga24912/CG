@@ -27,12 +27,16 @@ Material:
         m_Texture: {fileID: 11700000, guid: 4ed99a7ccafd728408a1bd580f472384, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _NoiseTex2:
+        m_Texture: {fileID: 11700000, guid: d2993425f654940448af634a1d7cf838, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Weather:
         m_Texture: {fileID: 2800000, guid: 4fc8578dbfa02c94fb44da4d7b155ead, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _Coverage: 0.2
+    - _Coverage: 0.4
     - _FarDist: 30000
     - _SampleCount: 128
     - _SkyExponent1: 8.5
