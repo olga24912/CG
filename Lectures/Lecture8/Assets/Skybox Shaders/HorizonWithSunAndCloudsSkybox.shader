@@ -165,7 +165,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         }
         
         float step = (dist1 - dist0)/samples;
-        float scatter = 0.05; 
+        float scatter = 0.07; 
         float3 pos = _WorldSpaceCameraPos + rayDir*dist0;
         float3 cloudLight = 0;
         float alpha = 0;
@@ -178,7 +178,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
            
              if (density > 0.0000001) {
                  alpha += (1.0 - alpha) * noise; 
-                 cloudLight += half3(1, 1, 1) * sampleConeToLight(pos)  * hg * density * scatter * BeerPowder(depth);  
+                 cloudLight += half3(1, 1, 1) * (1.0 - alpha) * sampleConeToLight(pos)  * hg * density * scatter * BeerPowder(depth);  
              }
 
              if (alpha >= 0.99) {
