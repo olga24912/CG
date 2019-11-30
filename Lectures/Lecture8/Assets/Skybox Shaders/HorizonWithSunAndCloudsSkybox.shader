@@ -95,19 +95,26 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
     }
 
     float getHighDetailNoise(float3 pos) {
-        const float scale = 3*1e-5;
+        const float scaleb = 4*1e-5;
+        const float scalea = 2*1e-5;
+        const float scaleg = 1e-5;
+        const float scaler = 5*1e-4;
         const float wscale = 1e-6;
         const float dscale = 1e-4; 
 
-        float4 uvw = float4(pos * scale, 0);
-        float cloudSample = tex3Dlod(_NoiseTex, uvw).b; 
+        float4 uvwr = float4(pos * scaler, 0);
+        float4 uvwg = float4(pos * scaleg, 0);
+        float4 uvwb = float4(pos * scaleb, 0);
+        float4 uvwa = float4(pos * scalea, 0);
+        float cloudSample = tex3Dlod(_NoiseTex, uvwb).b + (1./2)*tex3Dlod(_NoiseTex, uvwa).a + (1./4)*tex3Dlod(_NoiseTex, uvwr).g;// + (1./16)*tex3Dlod(_NoiseTex, uvwr).r;
+        
         float weather = tex2Dlod(_Weather, float4(pos.x * wscale, pos.z * wscale, 0, 0)).r;
         weather = saturate(weather - (1. - _Coverage));
         if (cloudSample * weather < 0.05) {
             return 0; 
         }
 
-        float detailNoise = 0.5*tex3Dlod(_NoiseTex2, float4(pos*dscale, 0)).b;
+        float detailNoise = 0;//0.5*tex3Dlod(_NoiseTex2, float4(pos*dscale, 0)).b;
         return saturate(cloudSample - detailNoise) * weather * getGradient(pos);
     }
 
