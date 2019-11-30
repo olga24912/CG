@@ -95,6 +95,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
     }
 
     float getHighDetailNoise(float3 pos) {
+        //pos.x += 20000;
         const float scaleb = 4*1e-5;
         const float scalea = 2*1e-5;
         const float scaleg = 1e-5;
@@ -125,13 +126,16 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
                                                              
 
     float sampleConeToLight(float3 pos) {
+        const float3 RandomVectores[6] = {{-0.6, 0.2, -0.4}, {-0.6, -0.7, -0.3}, {0.0, 0.9, -0.1}, {0.5, -0.6, 0.7}, {0.2, 0.6, -0.7}, {0.4, 0.7, -0.6}}; 
         const int sampleCount = 6;
+        //pos.x += 2000;
         float3 lightPos = normalize(_WorldSpaceLightPos0.xyz - pos);
+        //pos.x -= 2000;
         float step = (_MaxHigh - pos.y) / sampleCount;
         float depth = 0;
         float3 curpos = pos + lightPos * step;
         for (int s = 0; s < sampleCount; ++s) {
-            depth += getHighDetailNoise(curpos) * step;
+            depth += getHighDetailNoise(curpos + RandomVectores[s] * 100 * s) * step;
             curpos += lightPos * step;
         }
 
@@ -167,6 +171,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         float step = (dist1 - dist0)/samples;
         float scatter = 0.07; 
         float3 pos = _WorldSpaceCameraPos + rayDir*dist0;
+        //pos.x += 20000;
         float3 cloudLight = 0;
         float alpha = 0;
         float depth = 0;
@@ -178,7 +183,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
            
              if (density > 0.0000001) {
                  alpha += (1.0 - alpha) * noise; 
-                 cloudLight += half3(1, 1, 1) * (1.0 - alpha) * sampleConeToLight(pos)  * hg * density * scatter * BeerPowder(depth);  
+                 cloudLight += half3(1, 1, 1) * (1.0 - alpha) * sampleConeToLight(pos) * hg * density * scatter * BeerPowder(depth);  
              }
 
              if (alpha >= 0.99) {
