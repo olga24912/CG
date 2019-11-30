@@ -24,6 +24,8 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         _SampleCount("Sample Count", int) = 128 //64 - 128 depends on angle
         _FarDist("Far Dist", float) = 30000
         _Coverage("Coverage", float) = 0.5
+        _MaxHigh("Max cloud high", float) = 4000
+        _MinHigh("Min cloud high", float) = 1500
     }
 
     CGINCLUDE
@@ -63,6 +65,8 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
     int _SampleCount;
     float _FarDist;
     float _Coverage;
+    float _MaxHigh;
+    float _MinHigh;
 
     v2f vert(appdata v)
     {
@@ -70,6 +74,24 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         o.position = UnityObjectToClipPos(v.position);
         o.texcoord = v.texcoord;
         return o;
+    }
+
+    float getGradient(float3 pos) {
+        if (pos.y > _MaxHigh || pos.y < _MinHigh) {
+            return 0;
+        }
+
+        float posG0 = _MinHigh + (_MaxHigh - _MinHigh)/4;
+        float posG1 = _MaxHigh - (_MaxHigh - _MinHigh)/4;
+        
+        if (pos.y < posG0) {
+            return 1. - (posG0 - pos.y)/(posG0 - _MinHigh);
+        }
+        
+        if (pos.y > posG1) {
+            return 1. - (pos.y - posG1)/(_MaxHigh - posG1);
+        }
+        return 1;
     }
 
     float getHighDetailNoise(float3 pos) {
@@ -86,7 +108,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
         }
 
         float detailNoise = 0.5*tex3Dlod(_NoiseTex2, float4(pos*dscale, 0)).b;
-        return saturate(cloudSample - detailNoise) * weather;
+        return saturate(cloudSample - detailNoise) * weather * getGradient(pos);
     }
 
     float BeerPowder(float depth) {
@@ -98,7 +120,7 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
     float sampleConeToLight(float3 pos) {
         const int sampleCount = 6;
         float3 lightPos = normalize(_WorldSpaceLightPos0.xyz - pos);
-        float step = (float(4000) - pos.y) / sampleCount;
+        float step = (_MaxHigh - pos.y) / sampleCount;
         float depth = 0;
         float3 curpos = pos + lightPos * step;
         for (int s = 0; s < sampleCount; ++s) {
@@ -128,8 +150,8 @@ Shader "Skybox/HorizonWithSunAndCloudsSkybox"
 
         int samples = _SampleCount;
         float3 rayDir = normalize(i.texcoord);
-        float dist0 = float(1500)/rayDir.y;
-        float dist1 = float(4000)/rayDir.y;
+        float dist0 = _MinHigh/rayDir.y;
+        float dist1 = _MaxHigh/rayDir.y;
         
         if (rayDir.y < 0.03) {
             return half4(skyLight, 0);
